@@ -19,7 +19,7 @@ You should have received a copy of the GNU Lesser General Public License along w
         <V.com.braintribe.common>[2.0,2.1)</V.com.braintribe.common>
         <V.com.braintribe.wire>[2.0,2.1)</V.com.braintribe.wire>
         <V.tribefire.cortex.testing>[3.0,3.1)</V.tribefire.cortex.testing>
-        <V.tribefire.setup.classic.env>[3.3,3.4)</V.tribefire.setup.classic.env>
+        <V.tribefire.setup.classic.env>[3.0,3.1)</V.tribefire.setup.classic.env>
     </properties>
     <licenses>
         <license>
