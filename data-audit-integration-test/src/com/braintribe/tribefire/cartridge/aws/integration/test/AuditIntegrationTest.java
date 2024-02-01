@@ -477,7 +477,7 @@ public class AuditIntegrationTest extends AbstractTribefireQaTest {
 	private static class TestSelectQueries extends SelectQueries {
 		public static SelectQuery lastManipulationRecordTransactionId() {
 			From r = source(ManipulationRecord.T);
-			return from(r).orderBy(OrderingDirection.descending, property(r, ManipulationRecord.id)).limit(1)
+			return from(r).orderBy(OrderingDirection.descending, property(r, ManipulationRecord.date)).limit(1)
 					.select(property(r, ManipulationRecord.transactionId));
 		}
 
