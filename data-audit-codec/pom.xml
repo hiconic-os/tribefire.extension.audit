@@ -37,14 +37,9 @@ limitations under the License.
             <version>${V.tribefire.extension.audit}</version>
         </dependency>
         <dependency>
-            <groupId>tribefire.extension.audit</groupId>
-            <artifactId>data-audit-deployment-model</artifactId>
-            <version>${V.tribefire.extension.audit}</version>
-        </dependency>
-        <dependency>
-            <groupId>tribefire.cortex</groupId>
+            <groupId>com.braintribe.gm</groupId>
             <artifactId>aop-access-api</artifactId>
-            <version>${V.tribefire.cortex}</version>
+            <version>${V.com.braintribe.gm}</version>
         </dependency>
         <dependency>
             <groupId>com.braintribe.gm</groupId>
