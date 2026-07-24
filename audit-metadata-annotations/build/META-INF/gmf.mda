@@ -1,4 +1,0 @@
-tribefire.extension.audit.annotation.Audited,tribefire.extension.audit.model.deployment.meta.Audited
-tribefire.extension.audit.annotation.AuditedPreserved,tribefire.extension.audit.model.deployment.meta.AuditedPreserved
-tribefire.extension.audit.annotation.Unaudited,tribefire.extension.audit.model.deployment.meta.Unaudited
-tribefire.extension.audit.annotation.ServiceAuditRecordFactory,tribefire.extension.audit.model.deployment.meta.CreateServiceAuditRecordWithKey,value,recordFactoryKey
