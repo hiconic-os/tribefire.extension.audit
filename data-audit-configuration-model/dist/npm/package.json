@@ -9,7 +9,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hiconic-os/tribefire.extension.audit.git.git"
+    "url": "git+https://github.com/hiconic-os/tribefire.extension.audit.git"
   },
   "publishConfig": {
     "access": "public"

@@ -5,7 +5,7 @@
 
   <groupId>tribefire.extension.audit</groupId>
   <artifactId>data-audit-configuration-model</artifactId>
-  <version>2.0.1-rc</version>
+  <version>2.0.1</version>
   <hash>32e70ee99c3ec44d8c0c6f458bb76e0e</hash>
 
   <dependencies>
