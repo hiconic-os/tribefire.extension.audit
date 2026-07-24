@@ -62,11 +62,6 @@ limitations under the License.
         </dependency>
         <dependency>
             <groupId>tribefire.extension.audit</groupId>
-            <artifactId>service-audit-deployment-model</artifactId>
-            <version>${V.tribefire.extension.audit}</version>
-        </dependency>
-        <dependency>
-            <groupId>tribefire.extension.audit</groupId>
             <artifactId>service-audit-api-model</artifactId>
             <version>${V.tribefire.extension.audit}</version>
         </dependency>

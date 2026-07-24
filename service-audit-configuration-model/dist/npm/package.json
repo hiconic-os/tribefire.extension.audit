@@ -1,0 +1,21 @@
+{
+  "name": "@dev.hiconic/tf.extension.audit_service-audit-configuration-model",
+  "version": "2.0.1",
+  "main": "dist/service-audit-configuration-model.js",
+  "types": "dist/service-audit-configuration-model.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hiconic-os/tribefire.extension.audit.git.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@dev.hiconic/gm_root-model": "2.0.x",
+    "@dev.hiconic/gm_gm-core-api": "2.0.x"
+  }
+}

@@ -45,5 +45,11 @@ limitations under the License.
             <version>${V.com.braintribe.gm}</version>
             <?tag asset ?>
         </dependency>
+        <dependency>
+            <groupId>com.braintribe.gm</groupId>
+            <artifactId>meta-model</artifactId>
+            <version>${V.com.braintribe.gm}</version>
+            <?tag asset ?>
+        </dependency>
     </dependencies>
 </project>

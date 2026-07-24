@@ -32,10 +32,8 @@ import com.braintribe.gm.model.reason.Maybe;
 import com.braintribe.gm.model.reason.essential.InternalError;
 import com.braintribe.logging.Logger;
 import com.braintribe.model.accessapi.ManipulationRequest;
-import com.braintribe.model.extensiondeployment.ServiceProcessor;
 import com.braintribe.model.generic.GMF;
 import com.braintribe.model.generic.GenericEntity;
-import com.braintribe.model.generic.eval.Evaluator;
 import com.braintribe.model.generic.reflection.BaseType;
 import com.braintribe.model.generic.reflection.ConfigurableCloningContext;
 import com.braintribe.model.generic.reflection.EntityType;
@@ -64,7 +62,6 @@ import tribefire.extension.audit.model.ServiceAuditRecord;
 import tribefire.extension.audit.model.deployment.meta.AuditDataPreservation;
 import tribefire.extension.audit.model.deployment.meta.AuditPreservationDepth;
 import tribefire.extension.audit.model.deployment.meta.Audited;
-import tribefire.extension.audit.model.deployment.meta.CreateServiceAuditRecordWith;
 import tribefire.extension.audit.model.deployment.meta.ServiceAuditPreservations;
 import tribefire.extension.audit.model.service.audit.api.CreateServiceAuditRecord;
 
@@ -74,9 +71,9 @@ public class ServiceAuditInterceptor implements ReasonedServiceAroundProcessor<S
 	private Supplier<String> userNameProvider = AttributeContextValueSupplier.of(RequestorUserNameAspect.class);
 	private Supplier<String> userIpAddressProvider = AttributeContextValueSupplier.of(RequestorAddressAspect.class);
 	private String auditAccessId;
-	private Evaluator<ServiceRequest> systemEvaluator;
 	private PersistenceGmSessionFactory systemSessionFactory;
 	private MarshallerRegistry marshallerRegistry;
+	private ServiceAuditRecordFactoryResolver recordFactoryResolver = (cmdResolver, request) -> null;
 
 	@Configurable
 	public void setAuditAccessId(String auditAccessId) {
@@ -108,9 +105,9 @@ public class ServiceAuditInterceptor implements ReasonedServiceAroundProcessor<S
 		this.userIpAddressProvider = userIpAddressProvider;
 	}
 	
-	@Required @Configurable
-	public void setSystemEvaluator(Evaluator<ServiceRequest> systemEvaluator) {
-		this.systemEvaluator = systemEvaluator;
+	@Configurable
+	public void setRecordFactoryResolver(ServiceAuditRecordFactoryResolver recordFactoryResolver) {
+		this.recordFactoryResolver = recordFactoryResolver;
 	}
 
 	@Override
@@ -175,11 +172,6 @@ public class ServiceAuditInterceptor implements ReasonedServiceAroundProcessor<S
 			return settings != null? settings: ServiceAuditPreservations.T.create();
 		}
 		
-		private ServiceProcessor getRecordFactory() {
-			CreateServiceAuditRecordWith createWith = cmdResolver.getMetaData().entity(request).meta(CreateServiceAuditRecordWith.T).exclusive();
-			return createWith != null? createWith.getRecordFactory(): null;
-		}
-
 		private void storeRecord(Maybe<?> maybe) {
 			try {
 				long executionTimeInMs = System.currentTimeMillis() - started.getTime();
@@ -265,18 +257,17 @@ public class ServiceAuditInterceptor implements ReasonedServiceAroundProcessor<S
 		}
 		
 		private ServiceAuditRecord initRecord(Maybe<?> resultMaybe) {
-			ServiceProcessor serviceProcessor = getRecordFactory();
+			ServiceAuditRecordFactory recordFactory = recordFactoryResolver.resolve(cmdResolver, request);
 			
-			if (serviceProcessor == null)
+			if (recordFactory == null)
 				return session.create(ServiceAuditRecord.T);
 
 			CreateServiceAuditRecord createRecord = CreateServiceAuditRecord.T.create();
-			createRecord.setServiceId(serviceProcessor.getExternalId());
 			createRecord.setRequest(request);
 			createRecord.setResult(serviceResultFromMaybe(resultMaybe));
 			createRecord.setDomainId(domainId);
 			
-			ServiceAuditRecord serviceAuditRecord = createRecord.eval(systemEvaluator).get();
+			ServiceAuditRecord serviceAuditRecord = recordFactory.create(context, createRecord);
 			
 			serviceAuditRecord = serviceAuditRecord.clone(ConfigurableCloningContext.build().supplyRawCloneWith(session).done());
 			

@@ -21,6 +21,7 @@ import com.braintribe.wire.api.annotation.Import;
 import com.braintribe.wire.api.annotation.Managed;
 
 import tribefire.extension.audit.processing.ServiceAuditInterceptor;
+import tribefire.extension.audit.model.deployment.meta.CreateServiceAuditRecordWith;
 import tribefire.module.wire.contract.TribefireModuleContract;
 import tribefire.module.wire.contract.TribefireWebPlatformContract;
 
@@ -51,7 +52,18 @@ public class ServiceAuditModuleSpace implements TribefireModuleContract {
 		bean.setModelAccessoryFactory(tfPlatform.requestUserRelated().modelAccessoryFactory());
 		bean.setMarshallerRegistry(tfPlatform.marshalling().registry());
 		bean.setSystemSessionFactory(tfPlatform.systemUserRelated().sessionFactory());
-		bean.setSystemEvaluator(tfPlatform.systemUserRelated().evaluator());
+		bean.setRecordFactoryResolver((cmdResolver, request) -> {
+			CreateServiceAuditRecordWith createWith = cmdResolver.getMetaData().entity(request).meta(CreateServiceAuditRecordWith.T).exclusive();
+			com.braintribe.model.extensiondeployment.ServiceProcessor recordFactory =
+					createWith == null ? null : createWith.getRecordFactory();
+			if (recordFactory == null)
+				return null;
+
+			return (requestContext, createRecord) -> {
+				createRecord.setServiceId(recordFactory.getExternalId());
+				return createRecord.eval(tfPlatform.systemUserRelated().evaluator()).get();
+			};
+		});
 		
 		return bean;
 	}

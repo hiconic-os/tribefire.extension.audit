@@ -1,6 +1,4 @@
 // ============================================================================
-// Copyright BRAINTRIBE TECHNOLOGY GMBH, Austria, 2002-2022
-//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -20,17 +18,13 @@ import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EntityTypes;
 import com.braintribe.model.meta.data.EntityTypeMetaData;
 
-@Description("")
-public interface ServiceAuditPreservations extends EntityTypeMetaData {
-	EntityType<ServiceAuditPreservations> T = EntityTypes.T(ServiceAuditPreservations.class);
+/** Portable counterpart of the CX-specific record-factory metadata. */
+@Description("Selects a registered service processor which creates the concrete service audit record.")
+public interface CreateServiceAuditRecordWithKey extends EntityTypeMetaData {
+	EntityType<CreateServiceAuditRecordWithKey> T = EntityTypes.T(CreateServiceAuditRecordWithKey.class);
 
-	String requestPreservation = "requestPreservation";
-	String resultPreservation = "resultPreservation";
-	String recordFactory = "recordFactory";
-	
-	AuditDataPreservation getRequestPreservation();
-	void setRequestPreservation(AuditDataPreservation requestPreservation);
+	String recordFactoryKey = "recordFactoryKey";
 
-	AuditDataPreservation getResultPreservation();
-	void setResultPreservation(AuditDataPreservation resultPreservation);
+	String getRecordFactoryKey();
+	void setRecordFactoryKey(String recordFactoryKey);
 }
