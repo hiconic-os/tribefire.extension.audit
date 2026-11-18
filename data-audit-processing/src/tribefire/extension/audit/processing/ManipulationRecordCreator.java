@@ -226,6 +226,7 @@ public class ManipulationRecordCreator {
 					ManipulationRecord record = session.create(ManipulationRecord.T);
 
 					record.setDate(now);
+					record.setExpiryDate(AuditExpiry.expiryDate(typeUsageInfo.getAuditTtl(), now.getTime()));
 					record.setUser(this.userNameProvider.get());
 					record.setManipulationType(manipulationType);
 					record.setInstanceType(reference.getTypeSignature());

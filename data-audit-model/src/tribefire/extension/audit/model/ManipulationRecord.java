@@ -19,6 +19,7 @@ import java.util.Date;
 
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.annotation.SelectiveInformation;
+import com.braintribe.model.generic.annotation.meta.Indexed;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EntityTypes;
 
@@ -29,6 +30,7 @@ public interface ManipulationRecord extends GenericEntity {
 
 	String user = "user";
 	String date = "date";
+	String expiryDate = "expiryDate";
 	String manipulationType = "manipulationType";
 	String instanceType = "instanceType";
 	String instanceId = "instanceId";
@@ -47,6 +49,14 @@ public interface ManipulationRecord extends GenericEntity {
 
 	Date getDate();
 	void setDate(Date date);
+
+	/**
+	 * The time after which the record may be removed from the audit access, derived from the AuditTtl metadata of the manipulated type (see
+	 * {@link #getInstanceType() instanceType}). Null means the record never expires.
+	 */
+	@Indexed
+	Date getExpiryDate();
+	void setExpiryDate(Date expiryDate);
 
 	/** defines if an Entitiy is a preliminary instance or if the manipulation was persisted to the database */
 	boolean getPreliminaryInstance();

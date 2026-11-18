@@ -39,5 +39,11 @@ limitations under the License.
             <version>${V.com.braintribe.gm}</version>
             <?tag asset?>
         </dependency>
+        <dependency>
+            <groupId>tribefire.extension.audit</groupId>
+            <artifactId>audit-archive-model</artifactId>
+            <version>${V.tribefire.extension.audit}</version>
+            <?tag asset?>
+        </dependency>
     </dependencies>
 </project>

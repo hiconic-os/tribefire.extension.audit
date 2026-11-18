@@ -1,0 +1,3 @@
+domains:
+- serviceDomainId: audit-test.access
+  auditAccessId: audit-test.access

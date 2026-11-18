@@ -13,5 +13,7 @@
         <dependency><groupId>tribefire.extension.audit</groupId><artifactId>data-audit-configuration-model</artifactId><version>${V.tribefire.extension.audit}</version><?tag asset ?></dependency>
         <dependency><groupId>tribefire.extension.audit</groupId><artifactId>data-audit-processing</artifactId><version>${V.tribefire.extension.audit}</version></dependency>
         <dependency><groupId>tribefire.extension.audit</groupId><artifactId>data-audit-model</artifactId><version>${V.tribefire.extension.audit}</version><?tag asset ?></dependency>
+        <dependency><groupId>tribefire.extension.audit</groupId><artifactId>data-audit-api-model</artifactId><version>${V.tribefire.extension.audit}</version><?tag asset ?></dependency>
+        <dependency><groupId>tribefire.extension.audit</groupId><artifactId>audit-archive-processing</artifactId><version>${V.tribefire.extension.audit}</version></dependency>
     </dependencies>
 </project>

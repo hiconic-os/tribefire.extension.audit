@@ -12,6 +12,7 @@
         <dependency><groupId>hiconic.platform.reflex</groupId><artifactId>access-module-api</artifactId><version>${V.hiconic.platform.reflex}</version></dependency>
         <dependency><groupId>tribefire.extension.audit</groupId><artifactId>service-audit-configuration-model</artifactId><version>${V.tribefire.extension.audit}</version><?tag asset ?></dependency>
         <dependency><groupId>tribefire.extension.audit</groupId><artifactId>service-audit-processing</artifactId><version>${V.tribefire.extension.audit}</version></dependency>
+        <dependency><groupId>tribefire.extension.audit</groupId><artifactId>audit-archive-processing</artifactId><version>${V.tribefire.extension.audit}</version></dependency>
         <dependency><groupId>tribefire.extension.audit</groupId><artifactId>service-audit-model</artifactId><version>${V.tribefire.extension.audit}</version><?tag asset ?></dependency>
         <dependency><groupId>tribefire.extension.audit</groupId><artifactId>service-audit-api-model</artifactId><version>${V.tribefire.extension.audit}</version><?tag asset ?></dependency>
         <dependency><groupId>tribefire.extension.audit</groupId><artifactId>audit-metadata-model</artifactId><version>${V.tribefire.extension.audit}</version><?tag asset ?></dependency>

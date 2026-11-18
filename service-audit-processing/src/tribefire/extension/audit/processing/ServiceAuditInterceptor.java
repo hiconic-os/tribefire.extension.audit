@@ -61,6 +61,7 @@ import com.braintribe.utils.collection.impl.AttributeContexts;
 import tribefire.extension.audit.model.ServiceAuditRecord;
 import tribefire.extension.audit.model.deployment.meta.AuditDataPreservation;
 import tribefire.extension.audit.model.deployment.meta.AuditPreservationDepth;
+import tribefire.extension.audit.model.deployment.meta.AuditTtl;
 import tribefire.extension.audit.model.deployment.meta.Audited;
 import tribefire.extension.audit.model.deployment.meta.ServiceAuditPreservations;
 import tribefire.extension.audit.model.service.audit.api.CreateServiceAuditRecord;
@@ -117,9 +118,9 @@ public class ServiceAuditInterceptor implements ReasonedServiceAroundProcessor<S
 	}
 	
 	private class StatefulAuditedServiceProcessing {
-		private ServiceRequestContext context;
-		private ProceedContext proceedContext;
-		private ServiceRequest request;
+		private final ServiceRequestContext context;
+		private final ProceedContext proceedContext;
+		private final ServiceRequest request;
 		private CmdResolver cmdResolver;
 		private Date started;
 		private String domainId;
@@ -197,7 +198,8 @@ public class ServiceAuditInterceptor implements ReasonedServiceAroundProcessor<S
 				record.setCallId(callId);
 				record.setParentCallId(parentCallId);
 				record.setRequestType(request.entityType().getTypeSignature());
-				
+				record.setExpiryDate(resolveExpiryDate());
+
 				if (settings.getRequestPreservation() != null) {
 					Resource marshalledData = marshallData(settings.getRequestPreservation(), request, "service-request-preservation-" + callId);
 					record.setRequest(marshalledData);
@@ -218,6 +220,12 @@ public class ServiceAuditInterceptor implements ReasonedServiceAroundProcessor<S
 			} catch (Exception e) {
 				logger.error("Error while storing audit record for request " + request.entityType().getTypeSignature(), e);
 			}
+		}
+
+		/* Based on the current time rather than on the start of the request, see AuditExpiry. */
+		private Date resolveExpiryDate() {
+			AuditTtl auditTtl = cmdResolver.getMetaData().entity(request).meta(AuditTtl.T).exclusive();
+			return AuditExpiry.expiryDate(auditTtl, System.currentTimeMillis());
 		}
 
 		private String findParentCallId(String callId) {
@@ -336,7 +344,7 @@ public class ServiceAuditInterceptor implements ReasonedServiceAroundProcessor<S
 	}
 	
 	private static class ShallowCloneTarget implements CloneTarget {
-		private GenericEntity entity;
+		private final GenericEntity entity;
 		
 		private ShallowCloneTarget(GenericEntity entity) {
 			super();

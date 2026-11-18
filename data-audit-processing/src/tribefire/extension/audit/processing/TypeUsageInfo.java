@@ -37,6 +37,7 @@ import com.braintribe.model.processing.meta.cmd.builders.EntityMdResolver;
 import com.braintribe.model.processing.meta.cmd.builders.EntityRelatedMdResolver;
 import com.braintribe.utils.lcd.LazyInitialized;
 
+import tribefire.extension.audit.model.deployment.meta.AuditTtl;
 import tribefire.extension.audit.model.deployment.meta.Audited;
 import tribefire.extension.audit.model.deployment.meta.AuditedPreserved;
 
@@ -51,6 +52,7 @@ public class TypeUsageInfo {
 	private Set<PersistentEntityReference> preserveReferences = null;
 	private EntityMdResolver typeMdResolver;
 	private LazyInitialized<TrackMode> lifeCycleTrackMode = new LazyInitialized<TrackMode>(() -> resolveTrackMode(typeMdResolver));
+	private LazyInitialized<AuditTtl> auditTtl = new LazyInitialized<>(() -> typeMdResolver.meta(AuditTtl.T).exclusive());
 	private Map<String, PropertyInfo> propertyInfos = new HashMap<>();
 	private CmdResolver cmdResolver;
 	private List<String> preservedProperties = null;
@@ -187,6 +189,11 @@ public class TypeUsageInfo {
 	
 	public TrackMode getLifeCycleTrackMode() {
 		return lifeCycleTrackMode.get();
+	}
+
+	/** The time to live of the records of this type, null if they never expire. */
+	public AuditTtl getAuditTtl() {
+		return auditTtl.get();
 	}
 	
 	@Override

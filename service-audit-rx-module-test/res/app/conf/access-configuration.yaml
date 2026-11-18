@@ -1,0 +1,10 @@
+accesses:
+  - !hiconic.rx.access.smood.model.configuration.SmoodAccess
+    accessId: audit-test.access
+    displayName: Audit Test Access
+    resourceStorageId: test-file-storage
+    dataModelNames:
+      - tribefire.extension.audit:service-audit-model
+      - com.braintribe.gm:basic-resource-model
+    serviceModelNames:
+      - com.braintribe.gm:basic-resource-model

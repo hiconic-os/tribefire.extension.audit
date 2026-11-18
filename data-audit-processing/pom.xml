@@ -71,5 +71,10 @@ limitations under the License.
             <artifactId>data-audit-codec</artifactId>
             <version>${V.tribefire.extension.audit}</version>
         </dependency>
+        <dependency>
+            <groupId>tribefire.extension.audit</groupId>
+            <artifactId>audit-archive-processing</artifactId>
+            <version>${V.tribefire.extension.audit}</version>
+        </dependency>
     </dependencies>
 </project>

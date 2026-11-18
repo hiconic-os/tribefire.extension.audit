@@ -19,6 +19,7 @@ import java.util.Date;
 
 import com.braintribe.model.generic.GenericEntity;
 import com.braintribe.model.generic.annotation.SelectiveInformation;
+import com.braintribe.model.generic.annotation.meta.Indexed;
 import com.braintribe.model.generic.reflection.EntityType;
 import com.braintribe.model.generic.reflection.EntityTypes;
 import com.braintribe.model.resource.Resource;
@@ -33,6 +34,7 @@ public interface ServiceAuditRecord extends GenericEntity {
 	String user = "user";
 	String userIpAddress = "userIpAddress";
 	String date = "date";
+	String expiryDate = "expiryDate";
 	String domainId = "domainId";
 
 	String request = "request";
@@ -62,6 +64,14 @@ public interface ServiceAuditRecord extends GenericEntity {
 
 	Date getDate();
 	void setDate(Date date);
+
+	/**
+	 * The time after which the record may be removed from the audit access, derived from the AuditTtl metadata of the request type. Null means the
+	 * record never expires.
+	 */
+	@Indexed
+	Date getExpiryDate();
+	void setExpiryDate(Date expiryDate);
 
 	Resource getRequest();
 	void setRequest(Resource request);

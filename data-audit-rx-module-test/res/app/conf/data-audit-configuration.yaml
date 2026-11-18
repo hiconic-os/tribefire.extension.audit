@@ -1,0 +1,3 @@
+accesses:
+- accessId: audit-test.data
+  auditAccessId: audit-test.audit
