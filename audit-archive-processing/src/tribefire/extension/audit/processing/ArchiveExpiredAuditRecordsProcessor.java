@@ -68,6 +68,7 @@ import com.braintribe.utils.stream.api.StreamPipeFactory;
 import com.braintribe.utils.stream.api.StreamPipes;
 
 import tribefire.extension.audit.model.AuditArchive;
+import tribefire.extension.audit.model.AuditRecord;
 import tribefire.extension.audit.model.archive.api.ArchiveExpiredAuditRecords;
 import tribefire.extension.audit.model.archive.api.AuditArchivingResponse;
 
@@ -82,19 +83,13 @@ import tribefire.extension.audit.model.archive.api.AuditArchivingResponse;
  * <pre>
  * prefix.zip
  *     prefix--manifest.yaml        format version, cutoff, columns, and record count and date range of each CSV
- *     prefix--01.csv               RFC 4180, header row with the columns, at most recordsPerCsv records (see the request)
+ *     prefix--01.csv               RFC 4180, header row with _type and the property names, at most recordsPerCsv records (see the request)
  *     prefix--payloads/            the Resources of the records, e.g. preserved request and result
  * </pre>
  */
 public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessRequestProcessor<ArchiveExpiredAuditRecords, AuditArchivingResponse> {
 
 	private static final Logger log = Logger.getLogger(ArchiveExpiredAuditRecordsProcessor.class);
-
-	/** The property with the time of the record, by which the records are ordered. */
-	public static final String DATE_PROPERTY = "date";
-
-	/** The property with the time after which the record is archived, null if it never expires. */
-	public static final String EXPIRY_DATE_PROPERTY = "expiryDate";
 
 	/** Version of the layout of the zip and its files, see {@link AuditArchive#getFormatVersion()}. */
 	public static final int FORMAT_VERSION = 1;
@@ -110,7 +105,7 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 
 	private PersistenceGmSessionFactory systemSessionFactory;
 	private StreamPipeFactory streamPipeFactory = StreamPipes.simpleFactory();
-	private EntityType<?> recordType;
+	private EntityType<? extends AuditRecord> recordType;
 	private EntityType<? extends AuditArchive> archiveType;
 	private String kind;
 
@@ -125,15 +120,10 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 		this.streamPipeFactory = streamPipeFactory;
 	}
 
-	/**
-	 * The type of the archived records. The zip has the records of all its instantiable sub types too. The type must have the properties
-	 * {@value #DATE_PROPERTY} and {@value #EXPIRY_DATE_PROPERTY}, both of type {@link Date}.
-	 */
+	/** The type of the archived records. The zip has the records of all its instantiable sub types too. */
 	@Required
 	@Configurable
-	public void setRecordType(EntityType<?> recordType) {
-		requireDateProperty(recordType, DATE_PROPERTY);
-		requireDateProperty(recordType, EXPIRY_DATE_PROPERTY);
+	public void setRecordType(EntityType<? extends AuditRecord> recordType) {
 		this.recordType = recordType;
 	}
 
@@ -152,12 +142,6 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 	@Configurable
 	public void setKind(String kind) {
 		this.kind = kind;
-	}
-
-	private static void requireDateProperty(EntityType<?> type, String name) {
-		Property property = type.findProperty(name);
-		if (property == null || property.getType().getJavaType() != Date.class)
-			throw new IllegalArgumentException("Audit record type " + type.getTypeSignature() + " has no Date property: " + name);
 	}
 
 	@Override
@@ -196,7 +180,8 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 		private final Date cutoff = new Date();
 		private final String prefix;
 
-		private final List<String> columns;
+		/** The archived properties, i.e. the CSV columns after {@link #TYPE_COLUMN}. */
+		private final List<String> propertyNames;
 
 		/** The CSVs which are written, for the manifest. */
 		private final List<CsvInfo> csvInfos = new ArrayList<>();
@@ -212,13 +197,11 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 		private long recordCount;
 		private int counterWidth;
 
-		private final Property dateProperty = recordType.getProperty(DATE_PROPERTY);
-
 		public ArchiveRun(String accessId, int recordsPerCsv) {
 			this.accessId = accessId;
 			this.recordsPerCsv = recordsPerCsv;
 			this.prefix = sanitizeFileName(accessId) + "-" + kind + "-" + NAME_TIME_FORMAT.format(cutoff.toInstant());
-			this.columns = resolveColumns();
+			this.propertyNames = resolvePropertyNames();
 		}
 
 		public long run() {
@@ -258,8 +241,8 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 		private long countExpiredRecords() {
 			SelectQuery query = new SelectQueryBuilder().from(recordType, "r") //
 					.where().conjunction() //
-						.property("r", EXPIRY_DATE_PROPERTY).ne(null) //
-						.property("r", EXPIRY_DATE_PROPERTY).lt(cutoff) //
+						.property("r", AuditRecord.expiryDate).ne(null) //
+						.property("r", AuditRecord.expiryDate).lt(cutoff) //
 					.close() //
 					.select().count("r") //
 					.done();
@@ -268,8 +251,8 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 			return count == null ? 0 : count;
 		}
 
-		/** <code>_type</code>, then the union of the properties of all instantiable record types of the access, in a stable order. */
-		private List<String> resolveColumns() {
+		/** The union of the properties of all instantiable record types of the access, in a stable order, starting with the id. */
+		private List<String> resolvePropertyNames() {
 			Set<EntityType<?>> recordTypes = newSession().getModelAccessory().getOracle() //
 					.getEntityTypeOracle(recordType) //
 					.getSubTypes().transitive().includeSelf().onlyInstantiable() //
@@ -281,7 +264,6 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 					.collect(Collectors.toList());
 
 			Set<String> names = new LinkedHashSet<>();
-			names.add(TYPE_COLUMN);
 			names.add(GenericEntity.id);
 			for (EntityType<?> type : sortedTypes)
 				for (Property p : type.getProperties())
@@ -289,6 +271,13 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 						names.add(p.getName());
 
 			return new ArrayList<>(names);
+		}
+
+		private List<String> csvHeader() {
+			List<String> header = new ArrayList<>(propertyNames.size() + 1);
+			header.add(TYPE_COLUMN);
+			header.addAll(propertyNames);
+			return header;
 		}
 
 		// ##############################################
@@ -317,15 +306,15 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 		 * expectedCount records are written, so the counter width stays correct; any further record waits for the next run.
 		 */
 		private void exportRecords(long expectedCount) throws IOException {
-			GenericEntity last = null;
+			AuditRecord last = null;
 
 			while (recordCount < expectedCount) {
 				PersistenceGmSession session = newSession();
-				List<GenericEntity> page = session.query().entities(pageQuery(last)).list();
+				List<AuditRecord> page = session.query().entities(pageQuery(last)).list();
 				if (page.isEmpty())
 					return;
 
-				for (GenericEntity record : page) {
+				for (AuditRecord record : page) {
 					if (recordCount == expectedCount)
 						return;
 
@@ -335,24 +324,24 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 			}
 		}
 
-		private EntityQuery pageQuery(GenericEntity last) {
+		private EntityQuery pageQuery(AuditRecord last) {
 			EntityQueryBuilder builder = EntityQueryBuilder.from(recordType);
 
 			if (last == null)
 				builder.where().conjunction() //
-						.property(EXPIRY_DATE_PROPERTY).ne(null) //
-						.property(EXPIRY_DATE_PROPERTY).lt(cutoff) //
+						.property(AuditRecord.expiryDate).ne(null) //
+						.property(AuditRecord.expiryDate).lt(cutoff) //
 						.close();
 			else
 				// @formatter:off
 				builder.where()
 					.conjunction()
-						.property(EXPIRY_DATE_PROPERTY).ne(null)
-						.property(EXPIRY_DATE_PROPERTY).lt(cutoff)
+						.property(AuditRecord.expiryDate).ne(null)
+						.property(AuditRecord.expiryDate).lt(cutoff)
 						.disjunction()
-							.property(DATE_PROPERTY).gt(dateOf(last))
+							.property(AuditRecord.date).gt(last.getDate())
 							.conjunction()
-								.property(DATE_PROPERTY).eq(dateOf(last))
+								.property(AuditRecord.date).eq(last.getDate())
 								.property(GenericEntity.id).gt(last.getId())
 							.close()
 						.close()
@@ -361,7 +350,7 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 
 			return builder //
 					.orderByCascade() //
-					.dir(OrderingDirection.ascending).property(DATE_PROPERTY) //
+					.dir(OrderingDirection.ascending).property(AuditRecord.date) //
 					.dir(OrderingDirection.ascending).property(GenericEntity.id) //
 					.close() //
 					.limit(QUERY_PAGE_SIZE) //
@@ -369,26 +358,22 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 					.done();
 		}
 
-		private Date dateOf(GenericEntity record) {
-			return dateProperty.get(record);
-		}
-
-		private void exportRecord(PersistenceGmSession session, GenericEntity record) throws IOException {
+		private void exportRecord(PersistenceGmSession session, AuditRecord record) throws IOException {
 			if (currentCsv == null || currentCsv.recordCount == recordsPerCsv) {
 				finishCsv();
 				startCsv();
 			}
 
-			List<String> row = new ArrayList<>(columns.size());
+			List<String> row = new ArrayList<>(propertyNames.size() + 1);
 			row.add(record.entityType().getTypeSignature());
 
-			for (String column : columns.subList(1, columns.size())) {
-				Property property = record.entityType().findProperty(column);
+			for (String propertyName : propertyNames) {
+				Property property = record.entityType().findProperty(propertyName);
 				row.add(property == null ? "" : cellValue(session, record, property));
 			}
 
 			currentCsvPrinter.printRecord(row);
-			currentCsv.add(dateOf(record));
+			currentCsv.add(record.getDate());
 
 			rememberId(record.getId());
 			recordCount++;
@@ -411,7 +396,7 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 			currentCsv = new CsvInfo(prefix + "--" + counter + ".csv");
 			currentCsvPipe = streamPipeFactory.newPipe(currentCsv.name);
 			currentCsvPrinter = new CSVPrinter(new OutputStreamWriter(currentCsvPipe.openOutputStream(), StandardCharsets.UTF_8), CSVFormat.RFC4180);
-			currentCsvPrinter.printRecord(columns);
+			currentCsvPrinter.printRecord(csvHeader());
 		}
 
 		private void finishCsv() throws IOException {
@@ -467,7 +452,7 @@ public class ArchiveExpiredAuditRecordsProcessor implements ReasonedAccessReques
 			sb.append("recordsPerCsv: ").append(recordsPerCsv).append('\n');
 
 			sb.append("columns:\n");
-			for (String column : columns)
+			for (String column : csvHeader())
 				sb.append("  - ").append(yamlString(column)).append('\n');
 
 			sb.append("csvFiles:\n");
